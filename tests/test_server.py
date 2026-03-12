@@ -41,7 +41,7 @@ async def test_list_tables():
         "links": []
     }
 
-    with patch('scb_fastmcp.main._request', new_callable=AsyncMock) as mock_request:
+    with patch('scb_opendata_mcp.server._request', new_callable=AsyncMock) as mock_request:
         mock_request.return_value = mock_response
         result = await list_tables()
         assert result["tables"][0]["id"] == "BE0101A"
@@ -61,7 +61,7 @@ async def test_list_tables_with_query():
         "links": []
     }
 
-    with patch('scb_fastmcp.main._request', new_callable=AsyncMock) as mock_request:
+    with patch('scb_opendata_mcp.server._request', new_callable=AsyncMock) as mock_request:
         mock_request.return_value = mock_response
         result = await list_tables(query="employment")
         assert result["tables"][0]["label"] == "Employment statistics"
@@ -77,7 +77,7 @@ async def test_get_table_info():
         "variables": [{"id": "Age", "label": "Age"}]
     }
 
-    with patch('scb_fastmcp.main._request', new_callable=AsyncMock) as mock_request:
+    with patch('scb_opendata_mcp.server._request', new_callable=AsyncMock) as mock_request:
         mock_request.return_value = mock_response
         result = await get_table_info("BE0101A")
         assert result["id"] == "BE0101A"
@@ -97,7 +97,7 @@ async def test_search_tables():
         "links": []
     }
 
-    with patch('scb_fastmcp.main._request', new_callable=AsyncMock) as mock_request:
+    with patch('scb_opendata_mcp.server._request', new_callable=AsyncMock) as mock_request:
         mock_request.return_value = mock_response
         result = await search_tables("wage")
         assert result["tables"][0]["id"] == "BE0101A"
@@ -113,9 +113,9 @@ async def test_get_table_data():
         "values": [{"key": {"Age": "15-64"}, "values": [{"value": 1000000}]}]
     }
 
-    with patch('scb_fastmcp.main._request', new_callable=AsyncMock) as mock_request:
+    with patch('scb_opendata_mcp.server._request', new_callable=AsyncMock) as mock_request:
         mock_request.return_value = mock_response
-        result = await get_table_data("BE0101A", Age="15-64")
+        result = await get_table_data("BE0101A", filters={"Age": "15-64"})
         assert result["id"] == "BE0101A"
         assert result["values"][0]["values"][0]["value"] == 1000000
 
@@ -134,7 +134,7 @@ async def test_get_table_metadata():
         "timeVariable": "Year"
     }
 
-    with patch('scb_fastmcp.main._request', new_callable=AsyncMock) as mock_request:
+    with patch('scb_opendata_mcp.server._request', new_callable=AsyncMock) as mock_request:
         mock_request.return_value = mock_response
         result = await get_table_metadata("BE0101A")
         assert result["id"] == "BE0101A"
@@ -151,7 +151,7 @@ async def test_get_default_selection():
         }
     }
 
-    with patch('scb_fastmcp.main._request', new_callable=AsyncMock) as mock_request:
+    with patch('scb_opendata_mcp.server._request', new_callable=AsyncMock) as mock_request:
         mock_request.return_value = mock_response
         result = await get_default_selection("BE0101A")
         assert result["selection"]["Age"] == "15-64"
@@ -171,7 +171,7 @@ async def test_list_codelists():
         "links": []
     }
 
-    with patch('scb_fastmcp.main._request', new_callable=AsyncMock) as mock_request:
+    with patch('scb_opendata_mcp.server._request', new_callable=AsyncMock) as mock_request:
         mock_request.return_value = mock_response
         result = await list_codelists()
         assert len(result["codelists"]) == 2
@@ -190,7 +190,7 @@ async def test_get_codelist():
         ]
     }
 
-    with patch('scb_fastmcp.main._request', new_callable=AsyncMock) as mock_request:
+    with patch('scb_opendata_mcp.server._request', new_callable=AsyncMock) as mock_request:
         mock_request.return_value = mock_response
         result = await get_codelist("Region")
         assert result["id"] == "Region"
@@ -206,7 +206,7 @@ async def test_get_codelist_metadata():
         "description": "Administrative regions in Sweden"
     }
 
-    with patch('scb_fastmcp.main._request', new_callable=AsyncMock) as mock_request:
+    with patch('scb_opendata_mcp.server._request', new_callable=AsyncMock) as mock_request:
         mock_request.return_value = mock_response
         result = await get_codelist_metadata("Region")
         assert result["id"] == "Region"
@@ -226,7 +226,7 @@ async def test_list_saved_queries():
         "links": []
     }
 
-    with patch('scb_fastmcp.main._request', new_callable=AsyncMock) as mock_request:
+    with patch('scb_opendata_mcp.server._request', new_callable=AsyncMock) as mock_request:
         mock_request.return_value = mock_response
         result = await list_saved_queries()
         assert result["queries"][0]["id"] == "query1"
@@ -243,7 +243,7 @@ async def test_get_saved_query():
         "data": [{"value": 1000000}]
     }
 
-    with patch('scb_fastmcp.main._request', new_callable=AsyncMock) as mock_request:
+    with patch('scb_opendata_mcp.server._request', new_callable=AsyncMock) as mock_request:
         mock_request.return_value = mock_response
         result = await get_saved_query("query1")
         assert result["id"] == "query1"
@@ -261,7 +261,7 @@ async def test_save_query():
         "links": []
     }
 
-    with patch('scb_fastmcp.main._request', new_callable=AsyncMock) as mock_request:
+    with patch('scb_opendata_mcp.server._request', new_callable=AsyncMock) as mock_request:
         mock_request.return_value = mock_response
         result = await save_query("BE0101A", {"Age": "15-64"})
         assert result["id"] == "query1"
@@ -275,7 +275,7 @@ async def test_delete_saved_query():
         "message": "Query deleted successfully"
     }
 
-    with patch('scb_fastmcp.main._request', new_callable=AsyncMock) as mock_request:
+    with patch('scb_opendata_mcp.server._request', new_callable=AsyncMock) as mock_request:
         mock_request.return_value = mock_response
         result = await delete_saved_query("query1")
         assert "deleted successfully" in result["message"]
@@ -284,7 +284,7 @@ async def test_delete_saved_query():
 @pytest.mark.asyncio
 async def test_api_error_handling():
     """Test that API errors are properly raised"""
-    with patch('scb_fastmcp.main._request', new_callable=AsyncMock) as mock_request:
+    with patch('scb_opendata_mcp.server._request', new_callable=AsyncMock) as mock_request:
         mock_request.side_effect = SCBAPIError("Invalid table ID")
         with pytest.raises(SCBAPIError):
             await get_table_info("INVALID")
@@ -293,7 +293,7 @@ async def test_api_error_handling():
 @pytest.mark.asyncio
 async def test_rate_limit_handling():
     """Test that rate limit errors are properly raised"""
-    with patch('scb_fastmcp.main._request', new_callable=AsyncMock) as mock_request:
+    with patch('scb_opendata_mcp.server._request', new_callable=AsyncMock) as mock_request:
         mock_request.side_effect = RateLimitError("Rate limit exceeded")
         with pytest.raises(RateLimitError):
             await get_table_info("BE0101A")
@@ -304,7 +304,7 @@ async def test_language_parameter():
     """Test that language parameter is properly passed"""
     mock_response = {"label": "Population"}
 
-    with patch('scb_fastmcp.main._request', new_callable=AsyncMock) as mock_request:
+    with patch('scb_opendata_mcp.server._request', new_callable=AsyncMock) as mock_request:
         mock_request.return_value = mock_response
         await get_table_info("BE0101A", lang="sv")
         # Verify the request was made with Swedish language
@@ -323,7 +323,7 @@ async def test_pagination_parameters():
         "links": []
     }
 
-    with patch('scb_fastmcp.main._request', new_callable=AsyncMock) as mock_request:
+    with patch('scb_opendata_mcp.server._request', new_callable=AsyncMock) as mock_request:
         mock_request.return_value = mock_response
         await list_tables(page_number=2, page_size=50)
         # Verify the request was made with pagination parameters

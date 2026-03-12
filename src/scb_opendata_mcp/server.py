@@ -245,7 +245,7 @@ async def search_tables(
 async def get_table_data(
     table_id: str,
     lang: str = DEFAULT_LANGUAGE,
-    **filters
+    filters: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
     Retrieve statistical data from a table with optional filtering.
@@ -256,10 +256,10 @@ async def get_table_data(
     Args:
         table_id: The ID of the table to retrieve data from
         lang: Language for responses ('en' or 'sv'). Defaults to 'en'.
-        **filters: Optional filters for specific variables. Format:
-            - For single values: `variableId=value`
-            - For multiple values: `variableId=[value1, value2]`
-            - Example: `Age=15-19`, `Region=01` (Stockholm)
+        filters: Optional filters for specific variables. Format:
+            - For single values: {"variableId": "value"}
+            - For multiple values: {"variableId": ["value1", "value2"]}
+            - Example: {"Age": "15-19", "Region": "01"} (Stockholm)
 
     Returns:
         Dictionary containing:
@@ -277,23 +277,24 @@ async def get_table_data(
 
         Filter by age group and region:
         ```
-        get_table_data("BE0101A", Age="15-64", Region="01")
+        get_table_data("BE0101A", filters={"Age": "15-64", "Region": "01"})
         ```
 
         Filter with multiple values:
         ```
-        get_table_data("BE0101A", Age=["15-24", "25-54"], Region="01")
+        get_table_data("BE0101A", filters={"Age": ["15-24", "25-54"], "Region": "01"})
         ```
     """
     # Build the query parameter
     query = {}
-    for var_name, var_value in filters.items():
-        if isinstance(var_value, list):
-            # Multiple values
-            query[var_name] = [str(v) for v in var_value]
-        else:
-            # Single value
-            query[var_name] = str(var_value)
+    if filters:
+        for var_name, var_value in filters.items():
+            if isinstance(var_value, list):
+                # Multiple values
+                query[var_name] = [str(v) for v in var_value]
+            else:
+                # Single value
+                query[var_name] = str(var_value)
 
     params = {"lang": lang}
     json_data = {"query": [query], "response": {"format": "json"}}
