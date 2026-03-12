@@ -285,21 +285,23 @@ async def get_table_data(
         get_table_data("BE0101A", filters={"Age": ["15-24", "25-54"], "Region": "01"})
         ```
     """
-    # Build the query parameter
-    query = {}
+    # Build query parameters for GET request
+    # The SCB API v2 supports filtering via query parameters in GET requests
+    # This approach automatically handles mandatory variables
+    query_params = {}
     if filters:
         for var_name, var_value in filters.items():
             if isinstance(var_value, list):
-                # Multiple values
-                query[var_name] = [str(v) for v in var_value]
+                # Multiple values - convert to comma-separated string
+                query_params[var_name] = ",".join(str(v) for v in var_value)
             else:
                 # Single value
-                query[var_name] = str(var_value)
+                query_params[var_name] = str(var_value)
 
-    params = {"lang": lang}
-    json_data = {"query": [query], "response": {"format": "json"}}
+    params = {"lang": lang, "outputFormat": "json-stat2"}
+    params.update(query_params)
 
-    data = await _request("POST", f"/tables/{table_id}/code", json_data=json_data, params=params)
+    data = await _request("GET", f"/tables/{table_id}/data", params=params)
     return data
 
 @mcp.tool()

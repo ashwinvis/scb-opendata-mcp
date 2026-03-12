@@ -106,18 +106,105 @@ async def test_search_tables():
 @pytest.mark.asyncio
 async def test_get_table_data():
     """Test get_table_data function"""
+    # Mock response in JSON-STAT 2.0 format
     mock_response = {
-        "id": "BE0101A",
+        "version": "2.0",
+        "class": "dataset",
         "label": "Population by age and sex",
-        "variables": [{"id": "Age", "values": ["15-64"]}],
-        "values": [{"key": {"Age": "15-64"}, "values": [{"value": 1000000}]}]
+        "id": ["Age"],
+        "size": [1],
+        "dimension": {
+            "Age": {
+                "label": "Age",
+                "category": {
+                    "index": {"15-64": 0},
+                    "label": {"15-64": "15-64 years"}
+                }
+            }
+        },
+        "value": [1000000]
     }
 
     with patch('scb_opendata_mcp.server._request', new_callable=AsyncMock) as mock_request:
         mock_request.return_value = mock_response
         result = await get_table_data("BE0101A", filters={"Age": "15-64"})
-        assert result["id"] == "BE0101A"
-        assert result["values"][0]["values"][0]["value"] == 1000000
+        assert result["id"] == ["Age"]
+        assert result["value"] == [1000000]
+        # Verify the request was made with GET method and correct parameters
+        call_args = mock_request.call_args
+        assert call_args[0][0] == "GET"
+        assert call_args[0][1] == "/tables/BE0101A/data"
+        assert call_args[1]['params']['Age'] == "15-64"
+        assert call_args[1]['params']['outputFormat'] == "json-stat2"
+
+@pytest.mark.asyncio
+async def test_get_table_data_with_list_filters():
+    """Test get_table_data function with list filters"""
+    mock_response = {
+        "version": "2.0",
+        "class": "dataset",
+        "label": "Population by age groups",
+        "id": ["Age"],
+        "size": [2],
+        "dimension": {
+            "Age": {
+                "label": "Age",
+                "category": {
+                    "index": {"15-24": 0, "25-54": 1},
+                    "label": {"15-24": "15-24 years", "25-54": "25-54 years"}
+                }
+            }
+        },
+        "value": [500000, 500000]
+    }
+
+    with patch('scb_opendata_mcp.server._request', new_callable=AsyncMock) as mock_request:
+        mock_request.return_value = mock_response
+        result = await get_table_data("BE0101A", filters={"Age": ["15-24", "25-54"]})
+        assert result["id"] == ["Age"]
+        assert result["value"] == [500000, 500000]
+        # Verify the request was made with comma-separated values
+        call_args = mock_request.call_args
+        assert call_args[1]['params']['Age'] == "15-24,25-54"
+
+@pytest.mark.asyncio
+async def test_get_table_data_without_filters():
+    """Test get_table_data function without filters"""
+    mock_response = {
+        "version": "2.0",
+        "class": "dataset",
+        "label": "Complete population data",
+        "id": ["Age", "Sex"],
+        "size": [3, 2],
+        "dimension": {
+            "Age": {
+                "label": "Age",
+                "category": {
+                    "index": {"15-64": 0, "65+": 1, "0-14": 2},
+                    "label": {"15-64": "15-64 years", "65+": "65+ years", "0-14": "0-14 years"}
+                }
+            },
+            "Sex": {
+                "label": "Sex",
+                "category": {
+                    "index": {"1": 0, "2": 1},
+                    "label": {"1": "Men", "2": "Women"}
+                }
+            }
+        },
+        "value": [1000000, 200000, 500000, 900000, 180000, 450000]
+    }
+
+    with patch('scb_opendata_mcp.server._request', new_callable=AsyncMock) as mock_request:
+        mock_request.return_value = mock_response
+        result = await get_table_data("BE0101A")
+        assert result["id"] == ["Age", "Sex"]
+        assert len(result["value"]) == 6
+        # Verify the request was made without filter parameters
+        call_args = mock_request.call_args
+        assert 'Age' not in call_args[1]['params']
+        assert 'Sex' not in call_args[1]['params']
+        assert call_args[1]['params']['outputFormat'] == "json-stat2"
 
 
 @pytest.mark.asyncio
