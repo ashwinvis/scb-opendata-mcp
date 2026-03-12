@@ -12,6 +12,9 @@ authors = [
 ]
 license = {text = "MIT"}
 
+[project.scripts]
+scb-opendata-mcp = "scb_opendata_mcp:main"
+
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",
