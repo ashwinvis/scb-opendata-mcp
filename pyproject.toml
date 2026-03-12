@@ -1,0 +1,26 @@
+[project]
+name = "scb-opendata-mcp"
+version = "0.1.0"
+description = "Statistics Sweden’s open data made available as an MCP server"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastmcp>=3.1.0",
+]
+authors = [
+    {name = "Ashwin V. Mohanan", email = "dev@fluid.quest"},
+]
+license = {text = "MIT"}
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm]
+distribution = true
