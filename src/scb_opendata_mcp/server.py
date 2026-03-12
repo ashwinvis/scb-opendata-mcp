@@ -5,7 +5,7 @@ from typing import Optional, Dict, Any, List
 import json
 
 # API Configuration
-API_BASE_URL = "https://statistikdatabasen.scb.se/api/v2/"
+API_BASE_URL = "https://statistikdatabasen.scb.se/api/v2"
 DEFAULT_LANGUAGE = "en"
 MAX_RETRIES = 3
 RETRY_DELAY = 1.0
