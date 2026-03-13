@@ -3,7 +3,7 @@ import httpx
 import time
 from typing import Optional, Dict, Any
 import json
-from .models import (
+from scb_opendata_mcp.models import (
     TablesResponse,
     TableResponse,
     Dataset,

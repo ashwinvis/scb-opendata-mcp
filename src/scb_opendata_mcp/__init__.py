@@ -15,7 +15,7 @@ def main(
     if transport == "http":
         mcp.run(transport="http", host=host, port=port)
     else:
-        mcp.run(transport="stdio")
+        mcp.run(transport="stdio", show_banner=False)
     # asyncio.run(mcp.run_async(transport="http", host="127.0.0.1", port=6767))
 
 
