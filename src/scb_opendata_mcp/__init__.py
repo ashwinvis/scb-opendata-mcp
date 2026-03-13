@@ -1,11 +1,22 @@
-import asyncio
+# import asyncio
+from typing import Literal
+from cyclopts import App
 from .server import mcp
 
+app = App()
 
-def main():
-    # mcp.run()
+
+@app.default
+def main(
+    transport: Literal["stdio", "http"] = "http",
+    host: str = "0.0.0.0",
+    port: int = 6767,
+):
+    if transport == "http":
+        mcp.run(transport="http", host=host, port=port)
+    else:
+        mcp.run(transport="stdio")
     # asyncio.run(mcp.run_async(transport="http", host="127.0.0.1", port=6767))
-    mcp.run(transport="http", host="0.0.0.0", port=6767)
 
 
 if __name__ == "__main__":

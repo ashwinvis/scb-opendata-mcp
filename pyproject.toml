@@ -5,7 +5,9 @@ description = "Statistics Sweden’s open data made available as an MCP server"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "cyclopts>=4.8.0",
     "fastmcp>=3.1.0",
+    "httpx>=0.28.1",
 ]
 authors = [
     {name = "Ashwin V. Mohanan", email = "dev@fluid.quest"},
@@ -13,7 +15,7 @@ authors = [
 license = {text = "MIT"}
 
 [project.scripts]
-scb-opendata-mcp = "scb_opendata_mcp:main"
+scb_opendata_mcp = "scb_opendata_mcp:app"
 
 [dependency-groups]
 dev = [

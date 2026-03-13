@@ -1,6 +1,6 @@
-# FastMCP Server for Statistics Sweden (SCB) API
+# MCP Server for Statistics Sweden (SCB) API
 
-A FastMCP server that provides access to Statistics Sweden's PxWeb API v2, offering 5,155 statistical tables covering employment, labor costs, wages, and other economic data from Sweden.
+A FastMCP server that provides access to Statistics Sweden's PxWebApi v2, offering statistical tables covering employment, labor costs, wages, and other civil data from Sweden.
 
 ## Features
 
@@ -16,18 +16,18 @@ A FastMCP server that provides access to Statistics Sweden's PxWeb API v2, offer
 
 ### Prerequisites
 
-- Python 3.13 or higher
+- Python 3.11 or higher
 - pip or uv package manager
 
 ### Install from source
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/scb-fastmcp.git
-cd scb-fastmcp
+git clone https://github.com/ashwinvis/scb-opendata-mcp.git
+cd scb-opendata-mcp
 
 # Install dependencies
-pip install fastmcp
+pip install .
 
 # Or with uv
 uv sync
@@ -37,27 +37,56 @@ uv sync
 
 ### Running the server
 
+The package on installation 
+
 ```bash
-# Run the FastMCP server
-python -m scb_fastmcp.main
+scb_opendata_mcp
 
 # Or with uv
-uv run scb_fastmcp.main
+uv run scb_opendata_mcp
 ```
 
-### Using with Claude Code
+See `scb_opendata_mcp --help` for available options. An `stdio` transport mechanism also exists.
 
-The server is designed to work with Claude Code's MCP protocol. Once running, you can use tools like:
+**Fallback option**
 
-```python
-# List tables about employment
-result = await list_tables(query="employment")
+```bash
+uv run fastmcp run src/scb_opendata_mcp/server.py -t http  # HTTP server
+```
 
-# Get detailed info about a specific table
-table_info = await get_table_info("BE0101A")
+## Configuration for common agent harnesses
 
-# Retrieve actual data
-data = await get_table_data("BE0101A", Age="15-64", Region="01")
+### Claude Code
+
+```bash
+claude mcp add --scope user --transport http scb_opendata_mcp http://localhost:6767
+```
+
+### Mistral Vibe
+
+In `~/.vibe/config.toml` or `~/.vibe/agents/name_of_agent.toml`:
+
+```toml
+[[mcp_servers]]
+name = "scb_opendata_mcp"
+transport = "http"
+url = "http://localhost:6767/mcp"
+```
+
+### OpenCode
+
+In `~/.config/opencode/opencode.jsonc`:
+
+```json
+{
+  "mcp": {
+    "scb_opendata_mcp": {
+      "type": "remote",
+      "url": "https://localhost:6767/mcp",
+      "enabled": true
+    }
+  }
+}
 ```
 
 ## Tools Available
@@ -68,7 +97,7 @@ data = await get_table_data("BE0101A", Age="15-64", Region="01")
 - `search_tables(query)` - Search tables by name or description
 
 ### Data Retrieval
-- `get_table_data(table_id, **filters)` - Fetch data with optional filtering
+- `get_table_data(table_id, filters)` - Fetch data with optional filtering
 - `get_table_metadata(table_id)` - Get detailed metadata including variables
 - `get_default_selection(table_id)` - Get default data selection for a table
 
@@ -83,83 +112,12 @@ data = await get_table_data("BE0101A", Age="15-64", Region="01")
 - `save_query(table_id, selection)` - Save a data query
 - `delete_saved_query(query_id)` - Delete a saved query
 
-## Documentation
-
-- **[Usage Guide](docs/usage.md)** - Examples and best practices for using the server
-- **[Tool Documentation](docs/tools.md)** - Detailed documentation for each tool
-- **[API Specs](docs/specs.md)** - Conceptual documentation about the PxAPI
-- **[OpenAPI Specification](docs/PxAPI-2.yml)** - Technical API specification
-
-## Examples
-
-### Finding Employment Data
-
-```python
-# Search for employment tables
-results = await search_tables("employment", page_size=20)
-
-# Get details about the first table
-table_id = results['tables'][0]['id']
-table_info = await get_table_info(table_id)
-
-# Get metadata to understand variables
-metadata = await get_table_metadata(table_id)
-
-# Retrieve data for Stockholm (region code 01)
-stockholm_data = await get_table_data(
-    table_id,
-    Region="01",
-    Age="15-64"
-)
-```
-
-### Working with Codelists
-
-```python
-# Get region codelist
-regions = await get_codelist("Region")
-
-# Get age groups
-age_groups = await get_codelist("Age")
-
-# Use in a query
-stockholm_data = await get_table_data(
-    "BE0101A",
-    Region="01",  # Stockholm
-    Age="15-64"
-)
-```
-
-### Saving Queries
-
-```python
-# Save a common query
-saved = await save_query(
-    "BE0101A",
-    {"Age": "15-64", "Region": "01"}
-)
-
-# Retrieve it later
-saved_data = await get_saved_query(saved["id"])
-```
-
-## API Information
-
-- **Base URL**: https://api.scb.se/OV0104/v2
-- **Rate Limit**: 30 requests per 10 seconds
-- **Max Data Cells**: 10,000 per request
-- **Supported Languages**: English (en), Swedish (sv)
-
 ## Development
 
 ### Running Tests
 
 ```bash
-# Install test dependencies
-pip install pytest httpx
-
-# Run tests
-pytest tests/
+uv run pytest
 ```
 
 ### Contributing
@@ -173,6 +131,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## Support
 
 For issues or questions:
-- Check the [documentation](docs/)
-- Review the [OpenAPI specification](docs/PxAPI-2.yml)
-- Visit [Statistics Sweden API documentation](https://www.scb.se/en/services/api-intro)
+- Review the [OpenAPI specification](docs/PxAPI-2.yml) or alternatively from <https://github.com/PxTools/PxApiSpecs/blob/master/PxAPI-2.yml>.
+- Visit Statistics Sweden API documentation:
+  - På svenska: <https://www.scb.se/vara-tjanster/oppna-data/pxwebapi/pxwebapi-v2/>
+  - In English: <https://www.scb.se/en/services/open-data-api/pxwebapi/>
