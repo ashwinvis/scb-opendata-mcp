@@ -3,6 +3,7 @@ import httpx
 import time
 from typing import Optional, Dict, Any, List
 import json
+from .models import TablesResponse, TableResponse, Dataset, SelectionResponse, CodelistsResponse, CodelistResponse, SavedQueryResponse, ConfigResponse
 
 # API Configuration
 API_BASE_URL = "https://statistikdatabasen.scb.se/api/v2"
@@ -108,7 +109,7 @@ async def list_tables(
     include_discontinued: bool = False,
     page_number: int = 1,
     page_size: int = 100
-) -> Dict[str, Any]:
+) -> TablesResponse:
     """
     List all available statistical tables from Statistics Sweden.
 
@@ -163,7 +164,7 @@ async def list_tables(
 async def get_table_info(
     table_id: str,
     lang: str = DEFAULT_LANGUAGE
-) -> Dict[str, Any]:
+) -> TableResponse:
     """
     Get detailed information about a specific statistical table.
 
@@ -202,7 +203,7 @@ async def search_tables(
     lang: str = DEFAULT_LANGUAGE,
     page_number: int = 1,
     page_size: int = 50
-) -> Dict[str, Any]:
+) -> TablesResponse:
     """
     Search statistical tables by name or description.
 
@@ -246,7 +247,7 @@ async def get_table_data(
     table_id: str,
     lang: str = DEFAULT_LANGUAGE,
     filters: Optional[Dict[str, Any]] = None
-) -> Dict[str, Any]:
+) -> Dataset:
     """
     Retrieve statistical data from a table with optional filtering.
 
@@ -311,7 +312,7 @@ async def get_table_metadata(
     default_selection: bool = False,
     saved_query: Optional[str] = None,
     codelist: Optional[Dict[str, str]] = None
-) -> Dict[str, Any]:
+) -> Dataset:
     """
     Get detailed metadata for a table including all variables and values.
 
@@ -358,7 +359,7 @@ async def get_table_metadata(
 async def get_default_selection(
     table_id: str,
     lang: str = DEFAULT_LANGUAGE
-) -> Dict[str, Any]:
+) -> SelectionResponse:
     """
     Get the default data selection for a table.
 
@@ -392,7 +393,7 @@ async def list_codelists(
     lang: str = DEFAULT_LANGUAGE,
     page_number: int = 1,
     page_size: int = 100
-) -> Dict[str, Any]:
+) -> CodelistsResponse:
     """
     List all available codelists.
 
@@ -431,7 +432,7 @@ async def list_codelists(
 async def get_codelist(
     codelist_id: str,
     lang: str = DEFAULT_LANGUAGE
-) -> Dict[str, Any]:
+) -> CodelistResponse:
     """
     Get a specific codelist with all its values.
 
@@ -463,7 +464,7 @@ async def get_codelist(
 async def get_codelist_metadata(
     codelist_id: str,
     lang: str = DEFAULT_LANGUAGE
-) -> Dict[str, Any]:
+) -> CodelistResponse:
     """
     Get metadata for a specific codelist.
 
@@ -495,7 +496,7 @@ async def list_saved_queries(
     lang: str = DEFAULT_LANGUAGE,
     page_number: int = 1,
     page_size: int = 50
-) -> Dict[str, Any]:
+) -> SavedQueryResponse:
     """
     List all saved queries for the current user.
 
@@ -533,7 +534,7 @@ async def list_saved_queries(
 async def get_saved_query(
     query_id: str,
     lang: str = DEFAULT_LANGUAGE
-) -> Dict[str, Any]:
+) -> SavedQueryResponse:
     """
     Get a specific saved query.
 
@@ -565,7 +566,7 @@ async def save_query(
     table_id: str,
     selection: Dict[str, Any],
     lang: str = DEFAULT_LANGUAGE
-) -> Dict[str, Any]:
+) -> SavedQueryResponse:
     """
     Save a data query for later use.
 
@@ -608,7 +609,7 @@ async def save_query(
 async def delete_saved_query(
     query_id: str,
     lang: str = DEFAULT_LANGUAGE
-) -> Dict[str, Any]:
+) -> SavedQueryResponse:
     """
     Delete a saved query.
 
