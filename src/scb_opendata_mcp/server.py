@@ -1,9 +1,17 @@
 from fastmcp import FastMCP
 import httpx
 import time
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 import json
-from .models import TablesResponse, TableResponse, Dataset, SelectionResponse, CodelistsResponse, CodelistResponse, SavedQueryResponse, ConfigResponse
+from .models import (
+    TablesResponse,
+    TableResponse,
+    Dataset,
+    SelectionResponse,
+    CodelistsResponse,
+    CodelistResponse,
+    SavedQueryResponse,
+)
 
 # API Configuration
 API_BASE_URL = "https://statistikdatabasen.scb.se/api/v2"
@@ -13,13 +21,18 @@ RETRY_DELAY = 1.0
 
 mcp = FastMCP("FastMCP server for scb.se (Statistics Sweden) 🚀")
 
+
 class SCBAPIError(Exception):
     """Custom exception for SCB API errors"""
+
     pass
+
 
 class RateLimitError(Exception):
     """Custom exception for rate limit errors"""
+
     pass
+
 
 async def _request(
     method: str,
@@ -27,7 +40,7 @@ async def _request(
     params: Optional[Dict[str, Any]] = None,
     json_data: Optional[Dict[str, Any]] = None,
     headers: Optional[Dict[str, str]] = None,
-    retry_count: int = 0
+    retry_count: int = 0,
 ) -> Dict[str, Any]:
     """
     Internal method to make HTTP requests to SCB API with retry logic.
@@ -50,10 +63,7 @@ async def _request(
     url = f"{API_BASE_URL}{endpoint}"
 
     # Default headers
-    default_headers = {
-        "Accept": "application/json",
-        "Content-Type": "application/json"
-    }
+    default_headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
     if headers:
         default_headers.update(headers)
@@ -66,13 +76,15 @@ async def _request(
                 params=params,
                 json=json_data,
                 headers=default_headers,
-                timeout=30.0
+                timeout=30.0,
             )
 
             # Check for rate limiting
             if response.status_code == 429:
                 if retry_count < MAX_RETRIES:
-                    retry_after = float(response.headers.get("Retry-After", RETRY_DELAY))
+                    retry_after = float(
+                        response.headers.get("Retry-After", RETRY_DELAY)
+                    )
                     time.sleep(retry_after)
                     return await _request(
                         method, endpoint, params, json_data, headers, retry_count + 1
@@ -86,7 +98,7 @@ async def _request(
                     error_data = response.json()
                     if "message" in error_data:
                         error_msg += f": {error_data['message']}"
-                except:
+                except Exception:
                     pass
                 raise SCBAPIError(error_msg)
 
@@ -97,9 +109,11 @@ async def _request(
         except json.JSONDecodeError:
             raise SCBAPIError("Invalid JSON response from API")
 
+
 # ============================================================================
 # TABLE DISCOVERY TOOLS
 # ============================================================================
+
 
 @mcp.tool()
 async def list_tables(
@@ -108,7 +122,7 @@ async def list_tables(
     past_days: Optional[int] = None,
     include_discontinued: bool = False,
     page_number: int = 1,
-    page_size: int = 100
+    page_size: int = 100,
 ) -> TablesResponse:
     """
     List all available statistical tables from Statistics Sweden.
@@ -144,11 +158,7 @@ async def list_tables(
         list_tables(page_size=50)
         ```
     """
-    params = {
-        "lang": lang,
-        "page": page_number,
-        "pagesize": page_size
-    }
+    params = {"lang": lang, "page": page_number, "pagesize": page_size}
 
     if query:
         params["query"] = query
@@ -160,11 +170,9 @@ async def list_tables(
     data = await _request("GET", "/tables", params=params)
     return data
 
+
 @mcp.tool()
-async def get_table_info(
-    table_id: str,
-    lang: str = DEFAULT_LANGUAGE
-) -> TableResponse:
+async def get_table_info(table_id: str, lang: str = DEFAULT_LANGUAGE) -> TableResponse:
     """
     Get detailed information about a specific statistical table.
 
@@ -197,12 +205,10 @@ async def get_table_info(
     data = await _request("GET", f"/tables/{table_id}", params={"lang": lang})
     return data
 
+
 @mcp.tool()
 async def search_tables(
-    query: str,
-    lang: str = DEFAULT_LANGUAGE,
-    page_number: int = 1,
-    page_size: int = 50
+    query: str, lang: str = DEFAULT_LANGUAGE, page_number: int = 1, page_size: int = 50
 ) -> TablesResponse:
     """
     Search statistical tables by name or description.
@@ -232,21 +238,20 @@ async def search_tables(
         ```
     """
     return await list_tables(
-        lang=lang,
-        query=query,
-        page_number=page_number,
-        page_size=page_size
+        lang=lang, query=query, page_number=page_number, page_size=page_size
     )
+
 
 # ============================================================================
 # DATA RETRIEVAL TOOLS
 # ============================================================================
 
+
 @mcp.tool()
 async def get_table_data(
     table_id: str,
     lang: str = DEFAULT_LANGUAGE,
-    filters: Optional[Dict[str, Any]] = None
+    filters: Optional[Dict[str, Any]] = None,
 ) -> Dataset:
     """
     Retrieve statistical data from a table with optional filtering.
@@ -305,13 +310,14 @@ async def get_table_data(
     data = await _request("GET", f"/tables/{table_id}/data", params=params)
     return data
 
+
 @mcp.tool()
 async def get_table_metadata(
     table_id: str,
     lang: str = DEFAULT_LANGUAGE,
     default_selection: bool = False,
     saved_query: Optional[str] = None,
-    codelist: Optional[Dict[str, str]] = None
+    codelist: Optional[Dict[str, str]] = None,
 ) -> Dataset:
     """
     Get detailed metadata for a table including all variables and values.
@@ -355,10 +361,10 @@ async def get_table_metadata(
     data = await _request("GET", f"/tables/{table_id}/metadata", params=params)
     return data
 
+
 @mcp.tool()
 async def get_default_selection(
-    table_id: str,
-    lang: str = DEFAULT_LANGUAGE
+    table_id: str, lang: str = DEFAULT_LANGUAGE
 ) -> SelectionResponse:
     """
     Get the default data selection for a table.
@@ -381,18 +387,20 @@ async def get_default_selection(
         get_default_selection("BE0101A")
         ```
     """
-    data = await _request("GET", f"/tables/{table_id}/defaultselection", params={"lang": lang})
+    data = await _request(
+        "GET", f"/tables/{table_id}/defaultselection", params={"lang": lang}
+    )
     return data
+
 
 # ============================================================================
 # CODELIST TOOLS
 # ============================================================================
 
+
 @mcp.tool()
 async def list_codelists(
-    lang: str = DEFAULT_LANGUAGE,
-    page_number: int = 1,
-    page_size: int = 100
+    lang: str = DEFAULT_LANGUAGE, page_number: int = 1, page_size: int = 100
 ) -> CodelistsResponse:
     """
     List all available codelists.
@@ -419,19 +427,15 @@ async def list_codelists(
         list_codelists()
         ```
     """
-    params = {
-        "lang": lang,
-        "page": page_number,
-        "pagesize": page_size
-    }
+    params = {"lang": lang, "page": page_number, "pagesize": page_size}
 
     data = await _request("GET", "/codelists", params=params)
     return data
 
+
 @mcp.tool()
 async def get_codelist(
-    codelist_id: str,
-    lang: str = DEFAULT_LANGUAGE
+    codelist_id: str, lang: str = DEFAULT_LANGUAGE
 ) -> CodelistResponse:
     """
     Get a specific codelist with all its values.
@@ -460,10 +464,10 @@ async def get_codelist(
     data = await _request("GET", f"/codelists/{codelist_id}", params={"lang": lang})
     return data
 
+
 @mcp.tool()
 async def get_codelist_metadata(
-    codelist_id: str,
-    lang: str = DEFAULT_LANGUAGE
+    codelist_id: str, lang: str = DEFAULT_LANGUAGE
 ) -> CodelistResponse:
     """
     Get metadata for a specific codelist.
@@ -484,18 +488,20 @@ async def get_codelist_metadata(
         get_codelist_metadata("Age")
         ```
     """
-    data = await _request("GET", f"/codelists/{codelist_id}/metadata", params={"lang": lang})
+    data = await _request(
+        "GET", f"/codelists/{codelist_id}/metadata", params={"lang": lang}
+    )
     return data
+
 
 # ============================================================================
 # SAVED QUERY TOOLS
 # ============================================================================
 
+
 @mcp.tool()
 async def list_saved_queries(
-    lang: str = DEFAULT_LANGUAGE,
-    page_number: int = 1,
-    page_size: int = 50
+    lang: str = DEFAULT_LANGUAGE, page_number: int = 1, page_size: int = 50
 ) -> SavedQueryResponse:
     """
     List all saved queries for the current user.
@@ -521,19 +527,15 @@ async def list_saved_queries(
         list_saved_queries()
         ```
     """
-    params = {
-        "lang": lang,
-        "page": page_number,
-        "pagesize": page_size
-    }
+    params = {"lang": lang, "page": page_number, "pagesize": page_size}
 
     data = await _request("GET", "/savedqueries", params=params)
     return data
 
+
 @mcp.tool()
 async def get_saved_query(
-    query_id: str,
-    lang: str = DEFAULT_LANGUAGE
+    query_id: str, lang: str = DEFAULT_LANGUAGE
 ) -> SavedQueryResponse:
     """
     Get a specific saved query.
@@ -561,11 +563,10 @@ async def get_saved_query(
     data = await _request("GET", f"/savedqueries/{query_id}", params={"lang": lang})
     return data
 
+
 @mcp.tool()
 async def save_query(
-    table_id: str,
-    selection: Dict[str, Any],
-    lang: str = DEFAULT_LANGUAGE
+    table_id: str, selection: Dict[str, Any], lang: str = DEFAULT_LANGUAGE
 ) -> SavedQueryResponse:
     """
     Save a data query for later use.
@@ -593,22 +594,17 @@ async def save_query(
         save_query("BE0101A", {"Age": "15-64", "Region": "01"})
         ```
     """
-    json_data = {
-        "tableId": table_id,
-        "selection": selection
-    }
+    json_data = {"tableId": table_id, "selection": selection}
 
     data = await _request(
-        "POST", "/savedqueries",
-        json_data=json_data,
-        params={"lang": lang}
+        "POST", "/savedqueries", json_data=json_data, params={"lang": lang}
     )
     return data
 
+
 @mcp.tool()
 async def delete_saved_query(
-    query_id: str,
-    lang: str = DEFAULT_LANGUAGE
+    query_id: str, lang: str = DEFAULT_LANGUAGE
 ) -> SavedQueryResponse:
     """
     Delete a saved query.
@@ -628,8 +624,5 @@ async def delete_saved_query(
         delete_saved_query("my-query-123")
         ```
     """
-    data = await _request(
-        "DELETE", f"/savedqueries/{query_id}",
-        params={"lang": lang}
-    )
+    data = await _request("DELETE", f"/savedqueries/{query_id}", params={"lang": lang})
     return data

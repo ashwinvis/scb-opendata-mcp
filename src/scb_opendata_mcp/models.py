@@ -1,11 +1,13 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 
+
 class TablesResponse(BaseModel):
     language: str
     tables: List[Dict[str, Any]]
     page: Dict[str, Any]
     links: Optional[List[Dict[str, Any]]] = None
+
 
 class TableResponse(BaseModel):
     language: str
@@ -22,6 +24,7 @@ class TableResponse(BaseModel):
     timeUnit: Optional[str] = None
     paths: Optional[List[List[Dict[str, Any]]]] = None
     links: Optional[List[Dict[str, Any]]] = None
+
 
 class Dataset(BaseModel):
     version: str
@@ -40,16 +43,19 @@ class Dataset(BaseModel):
     value: Optional[List[Any]] = None
     status: Optional[Dict[str, str]] = None
 
+
 class SelectionResponse(BaseModel):
     selection: List[Dict[str, Any]]
     placement: Optional[Dict[str, Any]] = None
     language: str
     links: List[Dict[str, Any]]
 
+
 class CodelistsResponse(BaseModel):
     language: str
     codelists: List[Dict[str, Any]]
     links: Optional[List[Dict[str, Any]]] = None
+
 
 class CodelistResponse(BaseModel):
     id: str
@@ -62,11 +68,13 @@ class CodelistResponse(BaseModel):
     values: List[Dict[str, Any]]
     links: List[Dict[str, Any]]
 
+
 class SavedQueryResponse(BaseModel):
     language: str
     id: str
     savedQuery: Dict[str, Any]
     links: List[Dict[str, Any]]
+
 
 class ConfigResponse(BaseModel):
     apiVersion: str
