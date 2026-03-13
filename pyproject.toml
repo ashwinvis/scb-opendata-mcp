@@ -8,6 +8,7 @@ dependencies = [
     "cyclopts>=4.8.0",
     "fastmcp>=3.1.0",
     "httpx>=0.28.1",
+    "pydantic>=2.12.5",
 ]
 authors = [
     {name = "Ashwin V. Mohanan", email = "dev@fluid.quest"},
