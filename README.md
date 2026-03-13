@@ -135,3 +135,9 @@ For issues or questions:
 - Visit Statistics Sweden API documentation:
   - På svenska: <https://www.scb.se/vara-tjanster/oppna-data/pxwebapi/pxwebapi-v2/>
   - In English: <https://www.scb.se/en/services/open-data-api/pxwebapi/>
+
+## Disclaimer
+
+This is an unofficial tool. The code was generated using AI while using official documents and the API specification as context.
+Tests are also added to verify the functionality. A thorough rigorous verification test is recommended before using it in any
+serious application.
