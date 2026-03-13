@@ -1,5 +1,7 @@
 # MCP Server for Statistics Sweden (SCB) API
 
+[![PyPI](https://img.shields.io/pypi/v/scb-opendata-mcp)](https://pypi.org/project/scb-opendata-mcp/)
+
 A FastMCP server that provides access to Statistics Sweden's PxWebApi v2, offering statistical tables covering employment, labor costs, wages, and other civil data from Sweden.
 
 ## Features
@@ -18,6 +20,15 @@ A FastMCP server that provides access to Statistics Sweden's PxWebApi v2, offeri
 
 - Python 3.11 or higher
 - pip or uv package manager
+
+### Install from PyPI
+
+```bash
+pip install scb-opendata-mcp
+
+# Or with uv
+uvx scb_opendata_mcp
+```
 
 ### Install from source
 
