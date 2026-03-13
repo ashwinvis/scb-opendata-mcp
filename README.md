@@ -136,6 +136,10 @@ For issues or questions:
   - På svenska: <https://www.scb.se/vara-tjanster/oppna-data/pxwebapi/pxwebapi-v2/>
   - In English: <https://www.scb.se/en/services/open-data-api/pxwebapi/>
 
+## SCB Open Data Skills
+
+This is an unofficial companion repository [SCB Open Data Skills](https://github.com/ashwinvis/scb-opendata-skills) that provides skill definitions for accessing Statistics Sweden's data through this MCP server. These skills are designed to work with major coding agent tools and provide workflows for various statistical domains.
+
 ## Disclaimer
 
 This is an unofficial tool. The code was generated using AI while using official documents and the API specification as context.
