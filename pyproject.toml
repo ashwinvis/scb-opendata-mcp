@@ -1,6 +1,6 @@
 [project]
 name = "scb-opendata-mcp"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Statistics Sweden’s open data made available as an MCP server"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -32,3 +32,7 @@ build-backend = "pdm.backend"
 
 [tool.pdm]
 distribution = true
+
+[tool.pdm.version]
+source = "file"
+path = "scb_opendata_mcp/_version.py"

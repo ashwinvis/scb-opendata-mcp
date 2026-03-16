@@ -1,17 +1,22 @@
-from fastmcp import FastMCP
-import httpx
-import time
-from typing import Optional, Dict, Any
+import asyncio
 import json
+import sys
+from typing import Any, Dict, Optional
+
+import httpx
+from fastmcp import FastMCP
+
+from scb_opendata_mcp._version import __version__
 from scb_opendata_mcp.models import (
-    TablesResponse,
-    TableResponse,
-    Dataset,
-    SelectionResponse,
-    CodelistsResponse,
     CodelistResponse,
+    CodelistsResponse,
+    Dataset,
     SavedQueryResponse,
+    SelectionResponse,
+    TableResponse,
+    TablesResponse,
 )
+
 
 # API Configuration
 API_BASE_URL = "https://statistikdatabasen.scb.se/api/v2"
@@ -63,7 +68,11 @@ async def _request(
     url = f"{API_BASE_URL}{endpoint}"
 
     # Default headers
-    default_headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    default_headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": f"scb-opendata-mcp {__version__} Python {sys.version}"
+    }
 
     if headers:
         default_headers.update(headers)
@@ -85,11 +94,19 @@ async def _request(
                     retry_after = float(
                         response.headers.get("Retry-After", RETRY_DELAY)
                     )
-                    time.sleep(retry_after)
+                    asyncio.sleep(retry_after)
                     return await _request(
                         method, endpoint, params, json_data, headers, retry_count + 1
                     )
                 raise RateLimitError("Rate limit exceeded after retries")
+
+            # Respect X-Rate-Limit headers
+            # https://github.com/stefanprodan/aspnetcoreratelimit/wiki/ipratelimitmiddleware#behavior
+            if response.headers.get("X-Rate-Limit-Remaining", 1) < 1:
+                rate_limit_period = int(
+                    response.headers.get("X-Rate-Limit-Limit", "10s").removesuffix("s")
+                )
+                asyncio.sleep(rate_limit_period)
 
             # Check for other errors
             if response.status_code >= 400:
