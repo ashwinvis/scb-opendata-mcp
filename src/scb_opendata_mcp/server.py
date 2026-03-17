@@ -380,11 +380,11 @@ async def get_table_metadata(
 
 
 @mcp.tool()
-async def get_default_selection(
+async def get_table_default_selection(
     table_id: str, lang: str = DEFAULT_LANGUAGE
 ) -> SelectionResponse:
     """
-    Get the default data selection for a table.
+    Get the default data selection for a table by id.
 
     This shows you what data would be returned if you made a basic query
     without specifying any filters. Useful for understanding typical usage
@@ -401,7 +401,7 @@ async def get_default_selection(
     Example:
         Get default selection for employment table:
         ```
-        get_default_selection("BE0101A")
+        get_table_default_selection("BE0101A")
         ```
     """
     data = await _request(
