@@ -482,35 +482,6 @@ async def get_codelist(
     return data
 
 
-@mcp.tool()
-async def get_codelist_metadata(
-    codelist_id: str, lang: str = DEFAULT_LANGUAGE
-) -> CodelistResponse:
-    """
-    Get metadata for a specific codelist.
-
-    This provides additional information about a codelist such as its purpose
-    and usage context.
-
-    Args:
-        codelist_id: The ID of the codelist
-        lang: Language for responses ('en' or 'sv'). Defaults to 'en'.
-
-    Returns:
-        Dictionary containing codelist metadata.
-
-    Example:
-        Get metadata for age codelist:
-        ```
-        get_codelist_metadata("Age")
-        ```
-    """
-    data = await _request(
-        "GET", f"/codelists/{codelist_id}/metadata", params={"lang": lang}
-    )
-    return data
-
-
 # ============================================================================
 # SAVED QUERY TOOLS
 # ============================================================================
