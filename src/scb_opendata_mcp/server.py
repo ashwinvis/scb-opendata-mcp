@@ -1,7 +1,7 @@
 import asyncio
 import json
 import sys
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import httpx
 from fastmcp import FastMCP
@@ -102,7 +102,7 @@ async def _request(
 
             # Respect X-Rate-Limit headers
             # https://github.com/stefanprodan/aspnetcoreratelimit/wiki/ipratelimitmiddleware#behavior
-            if response.headers.get("X-Rate-Limit-Remaining", 1) < 1:
+            if int(response.headers.get("X-Rate-Limit-Remaining", 1)) < 1:
                 rate_limit_period = int(
                     response.headers.get("X-Rate-Limit-Limit", "10s").removesuffix("s")
                 )
@@ -189,41 +189,6 @@ async def list_tables(
 
 
 @mcp.tool()
-async def get_table_info(table_id: str, lang: str = DEFAULT_LANGUAGE) -> TableResponse:
-    """
-    Get detailed information about a specific statistical table.
-
-    This tool provides metadata for a specific table including its description,
-    update frequency, and other key information. Use this to understand what
-    data a table contains before retrieving it.
-
-    Args:
-        table_id: The ID of the table to retrieve (e.g., "BE0101A")
-        lang: Language for responses ('en' or 'sv'). Defaults to 'en'.
-
-    Returns:
-        Dictionary containing:
-        - id: Table identifier
-        - label: Table name/title
-        - description: Table description
-        - contentType: Type of content (e.g., "Data")
-        - updateFrequency: How often the table is updated
-        - lastUpdated: When the table was last updated
-        - nextUpdate: When the table will be updated next
-        - variables: List of variables in the table
-        - links: Related links
-
-    Example:
-        Get info about employment table:
-        ```
-        get_table_info("BE0101A")
-        ```
-    """
-    data = await _request("GET", f"/tables/{table_id}", params={"lang": lang})
-    return data
-
-
-@mcp.tool()
 async def search_tables(
     query: str, lang: str = DEFAULT_LANGUAGE, page_number: int = 1, page_size: int = 50
 ) -> TablesResponse:
@@ -259,6 +224,73 @@ async def search_tables(
     )
 
 
+@mcp.tool()
+async def get_table_metadata(
+    table_id: str,
+    lang: str = DEFAULT_LANGUAGE,
+    default_selection: bool = False,
+    saved_query: Optional[str] = None,
+    codelist: Optional[List[Dict[str, str]]] = None,
+) -> Dataset:
+    """
+    Get detailed information about a specific statistical table.
+
+    This tool provides metadata for a specific table including its dimensions,
+    size, and other key information. Use this to understand what
+    data a table contains before retrieving it.
+
+    Args:
+        table_id: The ID of the table
+        lang: Language for responses ('en' or 'sv'). Defaults to 'en'.
+        default_selection: Whether to include default selection as specified in `get_table_default_selection` tool.
+        saved_query: Optional saved query ID to apply
+        codelist: Optional codelist to apply. If needed, use `list_codelists` to check for available codelists.
+
+    Returns:
+        Dataset represents a table's metadata or data according to the JSON-stat 2.0 Dataset Schema.
+
+        Required properties:
+        - version: JSON-stat version (always "2.0")
+        - class: Class type (always "dataset")
+        - id: Table identifier
+        - size: Array of integers representing the size of each dimension
+        - dimension: Object describing the dimensions of the table. Each dimensions is a dictionary,
+          composed of the fields `label`, `note`, `category`, `extension` and `link`.
+
+        Optional properties:
+        - href: Link to the resource
+        - label: Table name/title
+        - source: Source of the data
+        - updated: When the table was last updated
+        - link: Related links
+        - note: Notes for the table
+        - role: Role of the dimensions (e.g., time, geo, metric)
+        - extension: Additional properties, mostly from PX-file format
+        - value: Array of numeric values representing the data
+        - status: Object with additional status information
+
+    Example:
+        Get full metadata for a table:
+        ```
+        get_table_metadata("TAB2844")
+        ```
+
+        Get metadata for a table and apply a codelist:
+        ```
+        get_table_metadata("EXAMPLE_TABLE", codelist=[{"variable_1": "NUTS_2008"}])
+        ```
+    """
+    params = {"lang": lang}
+    if default_selection:
+        params["defaultSelection"] = "true"
+    if saved_query:
+        params["savedQuery"] = saved_query
+    if codelist:
+        params["codelist"] = codelist
+
+    data = await _request("GET", f"/tables/{table_id}/metadata", params=params)
+    return data
+
 # ============================================================================
 # DATA RETRIEVAL TOOLS
 # ============================================================================
@@ -268,10 +300,12 @@ async def search_tables(
 async def get_table_data(
     table_id: str,
     lang: str = DEFAULT_LANGUAGE,
-    filters: Optional[Dict[str, Any]] = None,
+    selection: Optional[List[Dict[str, Any]]] = None,
 ) -> Dataset:
     """
     Retrieve statistical data from a table with optional filtering.
+    It can be useful to explore using `get_table_metadata` and
+   `get_table_default_selection` before executing this tool.
 
     This is the main tool for fetching actual data. You can specify which
     dimensions/variables you want to include using filter parameters.
@@ -279,10 +313,23 @@ async def get_table_data(
     Args:
         table_id: The ID of the table to retrieve data from
         lang: Language for responses ('en' or 'sv'). Defaults to 'en'.
-        filters: Optional filters for specific variables. Format:
-            - For single values: {"variableId": "value"}
-            - For multiple values: {"variableId": ["value1", "value2"]}
-            - Example: {"Age": "15-19", "Region": "01"} (Stockholm)
+        selection: Optional payload for custom selection. It can be a list of dictionaries
+            containing the fields `variableCode` and either `codelist` or `valueCodes`.
+            valueCodes can be specific lists or a selection expression.
+            The syntax for this argument as follows:
+            ```
+            selection=[
+                {
+                    "variableCode": "variable id",
+                    "codelist": "",
+                    "valueCodes": [
+                        "value-code1",
+                        "value-code2",
+                        "etc"
+                    ]
+                }
+            ]
+            ```
 
     Returns:
         Dictionary containing:
@@ -292,90 +339,135 @@ async def get_table_data(
         - values: The actual statistical data
         - dimensions: Dimension information
 
+    Selection expressions:
+
+        Selection expression can be used to select value codes that matches the expression.
+        The following expressions exists:
+
+        - `*` (wildcard)
+        - `?` (mask)
+        - `top`
+        - `bottom`
+        - `range`
+        - `to`
+        - `from`
+
+        ##### `*` (wildcard)
+
+        This matches based on a criteria that contains 1 or 2 wildcards e.g.
+
+        - `*` selects all codes.
+        - `12*` select all codes that starts with *12*.
+        - `*2` selects all codes that ends with *2*.
+        - `*4*` select all codes that contains a *4*.
+
+        ##### `?` (mask)
+
+        This matches on a criteria that contains a question mark e.g.
+
+        - `??` selects all codes that are two characters long.
+        - `1?` select all codes that are two characters long and starts with `1`.
+
+        ##### top
+
+        This expression selects the top number of values. If the variable is the time
+        variable that will be the latest time periods otherwise it will be the first code
+        as specified in the metadata.
+
+        The syntax of the experssion is:
+
+        ```
+        top(numberOfValues, offset)
+        ```
+
+        where `numberOfValues` specifies the number of values codes that should be
+        selected from the top and `offset` is an optional offset from the top. E.g.
+
+        - `top(5)` will select the first 5 values.
+        - `top(5, 1)` will skip the first value and select the next 5 values.
+
+        ##### bottom
+
+        This expression selects the bottom number of values. If the variable is the time
+        variable that will be the first time periods otherwise it will be the last code
+        as specified in the metadata.
+
+        The syntax of the experssion is:
+
+        ```
+        bottom(numberOfValues, offset)
+        ```
+
+        where `numberOfValues` specifies the number of values codes that should be
+        selected from the bottom and `offset` is an optional offset from the bottom. E.g.
+
+        - `bottom(5)` will select the last 5 values.
+        - `bottom(5, 1)` will skip the last value and select the next 5 values counting
+        from the bottom.
+
+        ##### range
+
+        This expression selects all value code between two value codes as they are given
+        in the metadata.
+
+        The syntax is in the form
+
+        ```
+        range(value-code1, value-code2)
+        ```
+
+        Example if you have a time variable that have codes from the year 2000 to 2025
+        then `range(2002,2005)` would select the codes for the years 2002 to 2005.
+
+        ##### from
+
+        This expression selects all value code from the specified value code.
+
+        The syntax is in the form
+
+        ```
+        from(value-code1)
+        ```
+
+        Example if you have a time variable that have codes from the year 2000 to 2025
+        then `from(2005)` would select the codes for the 2005 to 2025. When new data
+        comes for the year 2026 that will also be included.
+
+        ##### to
+
+        This expression selects all value code the bottom to the specified value code.
+
+        The syntax is in the form
+
+        ```
+        to(value-code1)
+        ```
+
+        Example if you have a time variable that have codes from the year 2000 to 2025
+        then `to(2005)` would select the codes from the 2000 to 2005.
+
     Example:
         Get basic data from a table:
         ```
         get_table_data("BE0101A")
         ```
 
-        Filter by age group and region:
+        Get data with selection expressions:
         ```
-        get_table_data("BE0101A", filters={"Age": "15-64", "Region": "01"})
-        ```
-
-        Filter with multiple values:
-        ```
-        get_table_data("BE0101A", filters={"Age": ["15-24", "25-54"], "Region": "01"})
+        get_table_data("TAB2844", selection=[
+                 {"variableCode": "Miljoomrade", "valueCodes": ["000", "100", "200", "300", "400"]},
+                 {"variableCode": "Tid", "valueCodes": ["from(2001)"]}
+        ])
         ```
     """
-    # Build query parameters for GET request
-    # The SCB API v2 supports filtering via query parameters in GET requests
-    # This approach automatically handles mandatory variables
-    query_params = {}
-    if filters:
-        for var_name, var_value in filters.items():
-            if isinstance(var_value, list):
-                # Multiple values - convert to comma-separated string
-                query_params[var_name] = ",".join(str(v) for v in var_value)
-            else:
-                # Single value
-                query_params[var_name] = str(var_value)
-
     params = {"lang": lang, "outputFormat": "json-stat2"}
-    params.update(query_params)
 
-    data = await _request("GET", f"/tables/{table_id}/data", params=params)
-    return data
+    if selection:
+        json_data = {"selection": selection}
+        data = await _request("POST", f"/tables/{table_id}/data", params=params, json_data=json_data)
+    else:
+        data = await _request("GET", f"/tables/{table_id}/data", params=params)
 
-
-@mcp.tool()
-async def get_table_metadata(
-    table_id: str,
-    lang: str = DEFAULT_LANGUAGE,
-    default_selection: bool = False,
-    saved_query: Optional[str] = None,
-    codelist: Optional[Dict[str, str]] = None,
-) -> Dataset:
-    """
-    Get detailed metadata for a table including all variables and values.
-
-    This tool provides comprehensive metadata needed to understand and query
-    a table, including all variables, their possible values, and relationships.
-    Use this before retrieving data to understand what filters you can apply.
-
-    Args:
-        table_id: The ID of the table
-        lang: Language for responses ('en' or 'sv'). Defaults to 'en'.
-        default_selection: Whether to include default selection
-        saved_query: Optional saved query ID to apply
-        codelist: Optional codelist to apply
-
-    Returns:
-        Dictionary containing:
-        - id: Table identifier
-        - label: Table name
-        - variables: Detailed variable definitions with values
-        - contentVariable: The main content variable
-        - timeVariable: The time dimension variable
-        - links: Related links
-
-    Example:
-        Get full metadata for a table:
-        ```
-        get_table_metadata("BE0101A")
-        ```
-    """
-    params = {"lang": lang}
-    if default_selection:
-        params["defaultSelection"] = "true"
-    if saved_query:
-        params["savedQuery"] = saved_query
-    if codelist:
-        # Convert dict to query string format
-        codelist_str = ",".join([f"{k}={v}" for k, v in codelist.items()])
-        params["codelist"] = codelist_str
-
-    data = await _request("GET", f"/tables/{table_id}/metadata", params=params)
     return data
 
 
@@ -417,19 +509,18 @@ async def get_table_default_selection(
 
 @mcp.tool()
 async def list_codelists(
-    lang: str = DEFAULT_LANGUAGE, page_number: int = 1, page_size: int = 100
+    table_id: str, lang: str = DEFAULT_LANGUAGE
 ) -> CodelistsResponse:
     """
-    List all available codelists.
+    List all available codelists for a particular table_id.
 
-    Codelists define the values that variables can take. They allow you to
+    Codelists define the values that  can take. They allow you to
     group or categorize data in different ways (e.g., by county instead of
     municipality).
 
     Args:
+        table_id: The ID of the table to retrieve data from
         lang: Language for responses ('en' or 'sv'). Defaults to 'en'.
-        page_number: Page number for pagination (1-based).
-        page_size: Number of results per page (max 100).
 
     Returns:
         Dictionary containing:
@@ -441,13 +532,17 @@ async def list_codelists(
     Example:
         List all codelists:
         ```
-        list_codelists()
+        list_codelists('TAB5974')
         ```
     """
-    params = {"lang": lang, "page": page_number, "pagesize": page_size}
+    params = {"lang": lang}
 
-    data = await _request("GET", "/codelists", params=params)
-    return data
+    data = await get_table_metadata(table_id=table_id, lang=lang)
+    codelists = {
+        dim_key: dim_value['extension']['codelists']
+        for dim_key, dim_value in data['dimension'].items()
+    }
+    return codelists
 
 
 @mcp.tool()
@@ -473,9 +568,9 @@ async def get_codelist(
         - variables: Variables this codelist applies to
 
     Example:
-        Get region codelist:
+        Get codelist on aggregated Age intervals:
         ```
-        get_codelist("Region")
+        get_codelist("agg_Ålder10år_1")
         ```
     """
     data = await _request("GET", f"/codelists/{codelist_id}", params={"lang": lang})
@@ -579,7 +674,12 @@ async def save_query(
     Example:
         Save a query for employment data:
         ```
-        save_query("BE0101A", {"Age": "15-64", "Region": "01"})
+        save_query(
+            "BE0101A", selection=[
+                {"variableCode": "Age", "valueCode":"15-64"},
+                {"variableCode: "Region", "valueCode":"01"}
+            ]
+        )
         ```
     """
     json_data = {"tableId": table_id, "selection": selection}

@@ -1149,7 +1149,6 @@ wheels = [
 
 [[package]]
 name = "scb-opendata-mcp"
-version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "cyclopts" },

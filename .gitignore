@@ -11,3 +11,7 @@ wheels/
 *.log
 .pdm-python
 .python-version
+
+# Project related
+docs/tables
+docs/tables_docs

@@ -35,4 +35,4 @@ distribution = true
 
 [tool.pdm.version]
 source = "file"
-path = "scb_opendata_mcp/_version.py"
+path = "src/scb_opendata_mcp/_version.py"

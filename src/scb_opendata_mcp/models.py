@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
+from typing import Optional, TypeAlias, Dict, Any, List
 
 
 class TablesResponse(BaseModel):
@@ -51,10 +51,7 @@ class SelectionResponse(BaseModel):
     links: List[Dict[str, Any]]
 
 
-class CodelistsResponse(BaseModel):
-    language: str
-    codelists: List[Dict[str, Any]]
-    links: Optional[List[Dict[str, Any]]] = None
+CodelistsResponse: TypeAlias = Dict[str, List[Dict[str, Any]]]
 
 
 class CodelistResponse(BaseModel):
