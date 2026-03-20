@@ -11,6 +11,7 @@ from scb_opendata_mcp.models import (
     CodelistResponse,
     CodelistsResponse,
     Dataset,
+    OutputFormat,
     OutputFormatParams,
     SavedQueryResponse,
     SelectionResponse,
@@ -306,7 +307,7 @@ async def get_table_data(
     table_id: str,
     lang: str = DEFAULT_LANGUAGE,
     selection: list[dict[str, Any]] | None = None,
-    output_format: str = "json-stat2",
+    output_format: OutputFormat = "json-stat2",
     output_format_params: OutputFormatParams | None = None,
 ) -> Dataset:
     """
@@ -644,7 +645,7 @@ async def save_query(
     table_id: str,
     selection: list[dict[str, Any]],
     lang: str = DEFAULT_LANGUAGE,
-    output_format: str = "json-stat2",
+    output_format: OutputFormat = "json-stat2",
     output_format_params: OutputFormatParams = ("UseCodes",),
 ) -> SavedQueryResponse:
     """
@@ -733,7 +734,7 @@ async def delete_saved_query(
 async def get_saved_query_data(
     query_id: str,
     lang: str = DEFAULT_LANGUAGE,
-    output_format: str = "json-stat2",
+    output_format: OutputFormat = "json-stat2",
     output_format_params: OutputFormatParams | None = None,
 ) -> Dataset:
     """

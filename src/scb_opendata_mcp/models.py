@@ -1,6 +1,16 @@
 from pydantic import BaseModel, Field
 from typing import TypeAlias, Any, Literal
 
+OutputFormat: TypeAlias = Literal[
+    "px",
+    "json-stat2",
+    "csv",
+    "xlsx",
+    "html",
+    "json-px",
+    "parquet",
+]
+
 OutputFormatParams: TypeAlias = tuple[
     Literal[
         "UseCodes",
