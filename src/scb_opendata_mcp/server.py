@@ -11,6 +11,7 @@ from scb_opendata_mcp.models import (
     CodelistResponse,
     CodelistsResponse,
     Dataset,
+    OutputFormatParams,
     SavedQueryResponse,
     SelectionResponse,
     TablesResponse,
@@ -305,6 +306,8 @@ async def get_table_data(
     table_id: str,
     lang: str = DEFAULT_LANGUAGE,
     selection: list[dict[str, Any]] | None = None,
+    output_format: str = "json-stat2",
+    output_format_params: OutputFormatParams | None = None,
 ) -> Dataset:
     """
      Retrieve statistical data from a table with optional filtering.
@@ -334,6 +337,10 @@ async def get_table_data(
                  }
              ]
              ```
+        output_format: Optional output format. If not specified, defaults to 'json-stat2'.
+            Available formats include csv,json-stat2,html,parquet,px etc
+        output_format_params: Optional parameters for the output format.
+            Format-specific parameters to customize the output.
 
      Returns:
          Dictionary containing:
@@ -463,8 +470,23 @@ async def get_table_data(
                   {"variableCode": "Tid", "valueCodes": ["from(2001)"]}
          ])
          ```
+
+         Specify output format:
+         ```
+         get_table_data("BE0101A", output_format="csv")
+         ```
+
+         Specify output format with parameters:
+         ```
+         get_table_data("BE0101A", output_format="json", output_format_params=("UseCodes",)
+         ```
     """
-    params = {"lang": lang, "outputFormat": "json-stat2"}
+    # Build params with output format
+    params: dict[str, Any] = {"lang": lang, "outputFormat": output_format}
+
+    # Add output format parameters if provided
+    if output_format_params:
+        params["outputFormatParams"] = list(output_format_params)
 
     if selection:
         json_data = {"selection": selection}
@@ -622,7 +644,8 @@ async def save_query(
     table_id: str,
     selection: list[dict[str, Any]],
     lang: str = DEFAULT_LANGUAGE,
-    output_format_params: tuple[str] = ("UseCodes",),
+    output_format: str = "json-stat2",
+    output_format_params: OutputFormatParams = ("UseCodes",),
 ) -> SavedQueryResponse:
     """
     Save a data query for later use.
@@ -635,6 +658,10 @@ async def save_query(
         table_id: The ID of the table
         selection: The data selection criteria (variable filters)
         lang: Language for responses ('en' or 'sv'). Defaults to 'en'.
+        output_format: Optional output format. If not specified, defaults to 'json-stat2'.
+            Available formats can be retrieved using `get_api_config()`.
+        output_format_params: Optional parameters for the output format.
+            Format-specific parameters to customize the output.
 
     Returns:
         Dictionary containing:
@@ -654,11 +681,21 @@ async def save_query(
             ]
         )
         ```
+
+        Save a query with specific output format:
+        ```
+        save_query(
+            "BE0101A",
+            selection=[{"variableCode": "Age", "valueCode":"15-64"}],
+            output_format="csv"
+        )
+        ```
     """
     json_data = {
         "tableId": table_id,
         "selection": {"selection": selection},
         "language": lang,
+        "outputFormat": output_format,
         "outputFormatParams": list(output_format_params),
     }
 
@@ -697,7 +734,7 @@ async def get_saved_query_data(
     query_id: str,
     lang: str = DEFAULT_LANGUAGE,
     output_format: str = "json-stat2",
-    output_format_params: list[str] | None = None,
+    output_format_params: OutputFormatParams | None = None,
 ) -> Dataset:
     """
     Retrieve data by running a saved query.

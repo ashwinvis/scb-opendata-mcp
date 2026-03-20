@@ -1,5 +1,19 @@
 from pydantic import BaseModel, Field
-from typing import TypeAlias, Any
+from typing import TypeAlias, Any, Literal
+
+OutputFormatParams: TypeAlias = tuple[
+    Literal[
+        "UseCodes",
+        "UseTexts",
+        "UseCodesAndTexts",
+        "IncludeTitle",
+        "SeparatorTab",
+        "SeparatorSpace",
+        "SeparatorSemicolon",
+        "ExcludeZerosAndMissingValues",
+    ],
+    ...,
+]
 
 
 class TablesResponse(BaseModel):
