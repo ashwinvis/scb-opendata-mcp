@@ -541,8 +541,6 @@ async def list_codelists(
         list_codelists('TAB5974')
         ```
     """
-    params = {"lang": lang}
-
     data = await get_table_metadata(table_id=table_id, lang=lang)
     codelists = {
         dim_key: dim_value["extension"]["codelists"]
