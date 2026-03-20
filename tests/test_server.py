@@ -9,15 +9,12 @@ import pytest
 from unittest.mock import AsyncMock, patch
 from scb_opendata_mcp.server import (
     list_tables,
-    get_table_info,
     search_tables,
     get_table_data,
     get_table_metadata,
-    get_default_selection,
+    get_table_default_selection,
     list_codelists,
     get_codelist,
-    get_codelist_metadata,
-    list_saved_queries,
     get_saved_query,
     save_query,
     delete_saved_query,
@@ -66,8 +63,8 @@ async def test_list_tables_with_query():
 
 
 @pytest.mark.asyncio
-async def test_get_table_info():
-    """Test get_table_info function"""
+async def test_get_table_metadata():
+    """Test get_table_metadata function"""
     mock_response = {
         "id": "BE0101A",
         "label": "Population by age and sex",
@@ -79,7 +76,7 @@ async def test_get_table_info():
         "scb_opendata_mcp.server._request", new_callable=AsyncMock
     ) as mock_request:
         mock_request.return_value = mock_response
-        result = await get_table_info("BE0101A")
+        result = await get_table_metadata("BE0101A")
         assert result["id"] == "BE0101A"
         assert result["label"] == "Population by age and sex"
 
@@ -126,14 +123,14 @@ async def test_get_table_data():
         "scb_opendata_mcp.server._request", new_callable=AsyncMock
     ) as mock_request:
         mock_request.return_value = mock_response
-        result = await get_table_data("BE0101A", filters={"Age": "15-64"})
+        result = await get_table_data("BE0101A", selection=[{"variableCode": "Age", "valueCodes": ["15-64"]}])
         assert result["id"] == ["Age"]
         assert result["value"] == [1000000]
-        # Verify the request was made with GET method and correct parameters
+        # Verify the request was made with POST method and correct parameters
         call_args = mock_request.call_args
-        assert call_args[0][0] == "GET"
+        assert call_args[0][0] == "POST"
         assert call_args[0][1] == "/tables/BE0101A/data"
-        assert call_args[1]["params"]["Age"] == "15-64"
+        assert call_args[1]["json_data"]["selection"] == [{"variableCode": "Age", "valueCodes": ["15-64"]}]
         assert call_args[1]["params"]["outputFormat"] == "json-stat2"
 
 
@@ -162,12 +159,14 @@ async def test_get_table_data_with_list_filters():
         "scb_opendata_mcp.server._request", new_callable=AsyncMock
     ) as mock_request:
         mock_request.return_value = mock_response
-        result = await get_table_data("BE0101A", filters={"Age": ["15-24", "25-54"]})
+        result = await get_table_data("BE0101A", selection=[{"variableCode": "Age", "valueCodes": ["15-24", "25-54"]}])
         assert result["id"] == ["Age"]
         assert result["value"] == [500000, 500000]
-        # Verify the request was made with comma-separated values
+        # Verify the request was made with POST method and correct parameters
         call_args = mock_request.call_args
-        assert call_args[1]["params"]["Age"] == "15-24,25-54"
+        assert call_args[0][0] == "POST"
+        assert call_args[0][1] == "/tables/BE0101A/data"
+        assert call_args[1]["json_data"]["selection"] == [{"variableCode": "Age", "valueCodes": ["15-24", "25-54"]}]
 
 
 @pytest.mark.asyncio
@@ -240,15 +239,15 @@ async def test_get_table_metadata():
 
 
 @pytest.mark.asyncio
-async def test_get_default_selection():
-    """Test get_default_selection function"""
+async def test_get_table_default_selection():
+    """Test get_table_default_selection function"""
     mock_response = {"selection": {"Age": "15-64", "Region": "01"}}
 
     with patch(
         "scb_opendata_mcp.server._request", new_callable=AsyncMock
     ) as mock_request:
         mock_request.return_value = mock_response
-        result = await get_default_selection("BE0101A")
+        result = await get_table_default_selection("BE0101A")
         assert result["selection"]["Age"] == "15-64"
 
 
@@ -256,23 +255,30 @@ async def test_get_default_selection():
 async def test_list_codelists():
     """Test list_codelists function"""
     mock_response = {
-        "codelists": [
-            {"id": "Region", "label": "Regions"},
-            {"id": "Age", "label": "Age groups"},
-        ],
-        "page": 1,
-        "totalPages": 1,
-        "totalHits": 2,
-        "links": [],
+        "id": "BE0101A",
+        "label": "Population by age and sex",
+        "dimension": {
+            "Age": {
+                "label": "Age",
+                "extension": {"codelists": [{"id": "AgeGroup", "label": "Age Groups"}]}
+            },
+            "Region": {
+                "label": "Region",
+                "extension": {"codelists": [{"id": "Region", "label": "Regions"}]}
+            }
+        }
     }
 
     with patch(
         "scb_opendata_mcp.server._request", new_callable=AsyncMock
     ) as mock_request:
         mock_request.return_value = mock_response
-        result = await list_codelists()
-        assert len(result["codelists"]) == 2
-        assert result["totalHits"] == 2
+        result = await list_codelists("BE0101A")
+        # The function returns a dict of codelists by dimension
+        assert "Age" in result
+        assert "Region" in result
+        assert len(result["Age"]) == 1
+        assert result["Age"][0]["id"] == "AgeGroup"
 
 
 @pytest.mark.asyncio
@@ -296,41 +302,10 @@ async def test_get_codelist():
         assert result["codes"][0]["code"] == "01"
 
 
-@pytest.mark.asyncio
-async def test_get_codelist_metadata():
-    """Test get_codelist_metadata function"""
-    mock_response = {
-        "id": "Region",
-        "label": "Regions",
-        "description": "Administrative regions in Sweden",
-    }
-
-    with patch(
-        "scb_opendata_mcp.server._request", new_callable=AsyncMock
-    ) as mock_request:
-        mock_request.return_value = mock_response
-        result = await get_codelist_metadata("Region")
-        assert result["id"] == "Region"
-        assert "Administrative regions" in result["description"]
 
 
-@pytest.mark.asyncio
-async def test_list_saved_queries():
-    """Test list_saved_queries function"""
-    mock_response = {
-        "queries": [{"id": "query1", "label": "My employment query"}],
-        "page": 1,
-        "totalPages": 1,
-        "totalHits": 1,
-        "links": [],
-    }
 
-    with patch(
-        "scb_opendata_mcp.server._request", new_callable=AsyncMock
-    ) as mock_request:
-        mock_request.return_value = mock_response
-        result = await list_saved_queries()
-        assert result["queries"][0]["id"] == "query1"
+
 
 
 @pytest.mark.asyncio
@@ -394,7 +369,7 @@ async def test_api_error_handling():
     ) as mock_request:
         mock_request.side_effect = SCBAPIError("Invalid table ID")
         with pytest.raises(SCBAPIError):
-            await get_table_info("INVALID")
+            await get_table_metadata("INVALID")
 
 
 @pytest.mark.asyncio
@@ -405,7 +380,7 @@ async def test_rate_limit_handling():
     ) as mock_request:
         mock_request.side_effect = RateLimitError("Rate limit exceeded")
         with pytest.raises(RateLimitError):
-            await get_table_info("BE0101A")
+            await get_table_metadata("BE0101A")
 
 
 @pytest.mark.asyncio
@@ -417,7 +392,7 @@ async def test_language_parameter():
         "scb_opendata_mcp.server._request", new_callable=AsyncMock
     ) as mock_request:
         mock_request.return_value = mock_response
-        await get_table_info("BE0101A", lang="sv")
+        await get_table_metadata("BE0101A", lang="sv")
         # Verify the request was made with Swedish language
         call_args = mock_request.call_args
         assert call_args[1]["params"]["lang"] == "sv"

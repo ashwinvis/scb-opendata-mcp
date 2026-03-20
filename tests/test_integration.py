@@ -26,7 +26,8 @@ async def test_list_tools(main_mcp_client: Client[FastMCPTransport]):
     list_tools = await main_mcp_client.list_tools()
 
     # The server should have multiple tools registered
-    assert len(list_tools) == 13
+    # Note: This was updated from 13 to 12 after removing some deprecated functions
+    assert len(list_tools) == 12
 
 
 @pytest.mark.asyncio
