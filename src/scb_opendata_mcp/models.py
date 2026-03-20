@@ -1,88 +1,88 @@
 from pydantic import BaseModel, Field
-from typing import Optional, TypeAlias, Dict, Any, List
+from typing import TypeAlias, Any
 
 
 class TablesResponse(BaseModel):
     language: str
-    tables: List[Dict[str, Any]]
-    page: Dict[str, Any]
-    links: Optional[List[Dict[str, Any]]] = None
+    tables: list[dict[str, Any]]
+    page: dict[str, Any]
+    links: list[dict[str, Any]] | None = None
 
 
 class TableResponse(BaseModel):
     language: str
     id: str
-    label: Optional[str] = None
-    description: Optional[str] = None
-    updated: Optional[str] = None
-    firstPeriod: Optional[str] = None
-    lastPeriod: Optional[str] = None
-    variableNames: List[str]
-    discontinued: Optional[bool] = None
-    source: Optional[str] = None
-    subjectCode: Optional[str] = None
-    timeUnit: Optional[str] = None
-    paths: Optional[List[List[Dict[str, Any]]]] = None
-    links: Optional[List[Dict[str, Any]]] = None
+    label: str | None = None
+    description: str | None = None
+    updated: str | None = None
+    firstPeriod: str | None = None
+    lastPeriod: str | None = None
+    variableNames: list[str]
+    discontinued: bool | None = None
+    source: str | None = None
+    subjectCode: str | None = None
+    timeUnit: str | None = None
+    paths: list[list[dict[str, Any]]] | None = None
+    links: list[dict[str, Any]] | None = None
 
 
 class Dataset(BaseModel):
     version: str
     class_: str = Field(alias="class")
-    href: Optional[str] = None
-    label: Optional[str] = None
-    source: Optional[str] = None
-    updated: Optional[str] = None
-    link: Optional[Dict[str, Any]] = None
-    note: Optional[List[str]] = None
-    role: Optional[Dict[str, Any]] = None
-    id: List[str]
-    size: List[int]
-    dimension: Dict[str, Any]
-    extension: Optional[Dict[str, Any]] = None
-    value: Optional[List[Any]] = None
-    status: Optional[Dict[str, str]] = None
+    href: str | None = None
+    label: str | None = None
+    source: str | None = None
+    updated: str | None = None
+    link: dict[str, Any] | None = None
+    note: list[str] | None = None
+    role: dict[str, Any] | None = None
+    id: list[str]
+    size: list[int]
+    dimension: dict[str, Any]
+    extension: dict[str, Any] | None = None
+    value: list[Any] | None = None
+    status: dict[str, str] | None = None
 
 
 class SelectionResponse(BaseModel):
-    selection: List[Dict[str, Any]]
-    placement: Optional[Dict[str, Any]] = None
-    language: Optional[str] = None
-    links: List[Dict[str, Any]]
+    selection: list[dict[str, Any]]
+    placement: dict[str, Any] | None = None
+    language: str | None = None
+    links: list[dict[str, Any]]
 
 
-CodelistsResponse: TypeAlias = Dict[str, List[Dict[str, Any]]]
+CodelistsResponse: TypeAlias = dict[str, list[dict[str, Any]]]
 
 
 class CodelistResponse(BaseModel):
     id: str
     label: str
     language: str
-    languages: List[str]
-    elimination: Optional[bool] = None
-    eliminationValueCode: Optional[str] = None
+    languages: list[str]
+    elimination: bool | None = None
+    eliminationValueCode: str | None = None
     type: str
-    values: List[Dict[str, Any]]
-    links: List[Dict[str, Any]]
+    values: list[dict[str, Any]]
+    links: list[dict[str, Any]]
 
 
 class SavedQueryResponse(BaseModel):
     language: str
     id: str
-    savedQuery: Dict[str, Any]
-    links: List[Dict[str, Any]]
+    savedQuery: dict[str, Any]
+    links: list[dict[str, Any]]
 
 
 class ConfigResponse(BaseModel):
     apiVersion: str
     appVersion: str
-    languages: List[Dict[str, Any]]
+    languages: list[dict[str, Any]]
     defaultLanguage: str
     maxDataCells: int
     maxCallsPerTimeWindow: int
     timeWindow: int
     license: str
     defaultDataFormat: str
-    dataFormats: List[str]
-    features: Optional[List[Dict[str, Any]]] = None
-    sourceReferences: Optional[List[Dict[str, Any]]] = None
+    dataFormats: list[str]
+    features: list[dict[str, Any]] | None = None
+    sourceReferences: list[dict[str, Any]] | None = None

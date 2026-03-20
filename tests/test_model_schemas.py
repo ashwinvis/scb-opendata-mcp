@@ -15,7 +15,7 @@ from src.scb_opendata_mcp.models import (
 
 def load_yaml_schema():
     """Load the OpenAPI schema from the YAML file."""
-    with open("docs/PxAPI-2.yml", "r") as f:
+    with open("docs/PxAPI-2.yml") as f:
         schema = yaml.safe_load(f)
     return schema
 

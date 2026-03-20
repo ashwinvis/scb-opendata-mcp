@@ -1,7 +1,7 @@
 import asyncio
 import json
 import sys
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import httpx
 from fastmcp import FastMCP
@@ -41,11 +41,11 @@ class RateLimitError(Exception):
 async def _request(
     method: str,
     endpoint: str,
-    params: Optional[Dict[str, Any]] = None,
-    json_data: Optional[Dict[str, Any]] = None,
-    headers: Optional[Dict[str, str]] = None,
+    params: dict[str, Any] | None = None,
+    json_data: dict[str, Any] | None = None,
+    headers: dict[str, str] | None = None,
     retry_count: int = 0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Internal method to make HTTP requests to SCB API with retry logic.
 
@@ -138,8 +138,8 @@ async def _request(
 @mcp.tool()
 async def list_tables(
     lang: str = DEFAULT_LANGUAGE,
-    query: Optional[str] = None,
-    past_days: Optional[int] = None,
+    query: str | None = None,
+    past_days: int | None = None,
     include_discontinued: bool = False,
     page_number: int = 1,
     page_size: int = 100,
@@ -232,8 +232,8 @@ async def get_table_metadata(
     table_id: str,
     lang: str = DEFAULT_LANGUAGE,
     default_selection: bool = False,
-    saved_query: Optional[str] = None,
-    codelist: Optional[List[Dict[str, str]]] = None,
+    saved_query: str | None = None,
+    codelist: list[dict[str, str]] | None = None,
 ) -> Dataset:
     """
     Get detailed information about a specific statistical table.
@@ -304,7 +304,7 @@ async def get_table_metadata(
 async def get_table_data(
     table_id: str,
     lang: str = DEFAULT_LANGUAGE,
-    selection: Optional[List[Dict[str, Any]]] = None,
+    selection: list[dict[str, Any]] | None = None,
 ) -> Dataset:
     """
      Retrieve statistical data from a table with optional filtering.
@@ -620,9 +620,9 @@ async def get_saved_query(
 @mcp.tool()
 async def save_query(
     table_id: str,
-    selection: List[Dict[str, Any]],
+    selection: list[dict[str, Any]],
     lang: str = DEFAULT_LANGUAGE,
-    output_format_params: Tuple[str] = ("UseCodes",),
+    output_format_params: tuple[str] = ("UseCodes",),
 ) -> SavedQueryResponse:
     """
     Save a data query for later use.
@@ -697,7 +697,7 @@ async def get_saved_query_data(
     query_id: str,
     lang: str = DEFAULT_LANGUAGE,
     output_format: str = "json-stat2",
-    output_format_params: Optional[List[str]] = None,
+    output_format_params: list[str] | None = None,
 ) -> Dataset:
     """
     Retrieve data by running a saved query.

@@ -15,7 +15,7 @@ from pathlib import Path
 
 def load_table_page(page_file):
     """Load a single page of table data from JSON file."""
-    with open(page_file, "r", encoding="utf-8") as f:
+    with open(page_file, encoding="utf-8") as f:
         return json.load(f)
 
 
