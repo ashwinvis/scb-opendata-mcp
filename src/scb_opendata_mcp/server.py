@@ -94,7 +94,7 @@ async def _request(
                     retry_after = float(
                         response.headers.get("Retry-After", RETRY_DELAY)
                     )
-                    asyncio.sleep(retry_after)
+                    await asyncio.sleep(retry_after)
                     return await _request(
                         method, endpoint, params, json_data, headers, retry_count + 1
                     )
@@ -106,7 +106,7 @@ async def _request(
                 rate_limit_period = int(
                     response.headers.get("X-Rate-Limit-Limit", "10s").removesuffix("s")
                 )
-                asyncio.sleep(rate_limit_period)
+                await asyncio.sleep(rate_limit_period)
 
             # Check for other errors
             if response.status_code >= 400:
@@ -115,6 +115,10 @@ async def _request(
                     error_data = response.json()
                     if "message" in error_data:
                         error_msg += f": {error_data['message']}"
+                    if "title" in error_data:
+                        error_msg += f" [{error_data['title']}"
+                    if "errors" in error_data:
+                        error_msg += f" (Errors: {error_data['errors']})"
                 except Exception:
                     pass
                 raise SCBAPIError(error_msg)

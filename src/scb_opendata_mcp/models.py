@@ -47,7 +47,7 @@ class Dataset(BaseModel):
 class SelectionResponse(BaseModel):
     selection: List[Dict[str, Any]]
     placement: Optional[Dict[str, Any]] = None
-    language: str
+    language: Optional[str] = None
     links: List[Dict[str, Any]]
 
 
