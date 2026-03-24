@@ -18,6 +18,9 @@ license = {text = "MIT"}
 [project.scripts]
 scb_opendata_mcp = "scb_opendata_mcp:app"
 
+[project.urls]
+Repository = "https://github.com/ashwinvis/scb-opendata-mcp"
+
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",
