@@ -104,22 +104,21 @@ In `~/.config/opencode/opencode.jsonc`:
 
 ### Table Discovery
 - `list_tables()` - List all available statistical tables with pagination
-- `get_table_info(table_id)` - Get metadata for a specific table
-- `search_tables(query)` - Search tables by name or description
+- `get_table_metadata(table_id)` - Get detailed metadata including variables
+- `search_tables(query)` - Convenience wrapper over `list_tables`, to search tables by name or description
 
 ### Data Retrieval
 - `get_table_data(table_id, filters)` - Fetch data with optional filtering
-- `get_table_metadata(table_id)` - Get detailed metadata including variables
-- `get_default_selection(table_id)` - Get default data selection for a table
+- `get_table_default_selection(table_id)` - Get default data selection for a table
 
 ### Codelist Tools
-- `list_codelists()` - List all available codelists
+- `list_codelists(table_id)` - List all available codelists for the table
 - `get_codelist(codelist_id)` - Get specific codelist details
-- `get_codelist_metadata(codelist_id)` - Get metadata for a codelist
 
 ### Saved Query Tools
-- `list_saved_queries()` - List user's saved queries
-- `get_saved_query(query_id)` - Get a specific saved query
+- `get_saved_query(query_id)` - Get a saved query including data and selection criteria
+- `get_saved_query_data(query_id)` - Get data from a specific saved query
+- `get_saved_query_selection(query_id)` - Get the selection query used in a specific saved query
 - `save_query(table_id, selection)` - Save a data query
 - `delete_saved_query(query_id)` - Delete a saved query
 
