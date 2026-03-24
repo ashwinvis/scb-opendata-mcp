@@ -156,3 +156,5 @@ This is an unofficial companion repository [SCB Open Data Skills](https://github
 This is an unofficial tool. The code was generated using AI while using official documents and the API specification as context.
 Tests are also added to verify the functionality. A thorough rigorous verification test is recommended before using it in any
 serious application.
+
+<!-- mcp-name: io.github.ashwinvis/scb-opendata-mcp -->
